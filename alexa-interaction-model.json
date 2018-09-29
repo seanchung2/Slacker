@@ -1,0 +1,144 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "slack talk",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "SlackPostIntent",
+                    "slots": [
+                        {
+                            "name": "message",
+                            "type": "messageString",
+                            "samples": [
+                                "{message}",
+                                "post {message}",
+                                "let me post {message}",
+                                "I want to post {message}",
+                                "I want to send {message}",
+                                "send {message}",
+                                "I'm gonna send {message}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "post {message}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "messageString",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "hello"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "anything"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "this is a message that I'm sending to slack"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "hello world"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I can say whatever I want"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Welcome to slack, me"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "what the fuck are you talking about you fucking pleb"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "the world will know we've been keeping score"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "everyday, I wonder everyday, who was it brought me here, from the barricade"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "holy shit"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Oh my god it works, this is fantastic"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Nope, it actually might not work because there's no hope in the universe"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "SlackPostIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "message",
+                            "type": "messageString",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Intent-SlackPostIntent.IntentSlot-message"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Intent-SlackPostIntent.IntentSlot-message",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What would you like to post?"
+                    }
+                ]
+            }
+        ]
+    }
+}
