@@ -31,6 +31,7 @@ var slackHistoryRequest = {
     ],
     method: 'GET'
 }
+
 // 2. Skill Code =======================================================================================================
 
 function parameterize(parameters) {
@@ -125,6 +126,55 @@ function readFromSlack(period, callback) {
         res.on('end', () => {
           console.log('Returning ' + returnData)
             callback(returnData)
+        })
+    })
+    console.log('req socnturusta')
+    req.on('error', (err) => {
+      console.error(err.message)
+    })
+    req.write('')
+    req.end()
+    console.log('Req ended')
+}
+
+
+function getUserName(userID, callback) {
+    var slackUsersInfoRequest = {
+        host: 'slack.com',
+        path: '/api/users.info',
+        parameters: [
+            {
+                'key': 'token',
+                'value': '???',
+            },
+            {
+                'key': 'user',
+                'value': userID
+            }
+        ],
+        method: 'GET'
+    }
+
+    var url = JSON.parse(JSON.stringify(slackUsersInfoRequest))
+    console.log(url)
+    var params = url.parameters
+    console.log(params)
+    url.path += parameterize(params)
+    url.parameters = undefined
+    console.log(JSON.stringify(url))
+
+    var req = https.request(url, (res) => {
+        res.setEncoding('utf8')
+        var returnData = ''
+
+        res.on('data', (chunk) => {
+            console.log('Chjnked: ' + chunk)
+            returnData += chunk
+        })
+
+        res.on('end', () => {
+          console.log('Returning ' + JSON.parse(returnData).user.real_name)
+            callback(JSON.parse(returnData).user.real_name)
         })
     })
     console.log('req socnturusta')
