@@ -11,12 +11,40 @@ var languageStrings = {
     }
 }
 
-var slackRequest = {
+var slackPostRequest = {
     host: 'hooks.slack.com',
     path: '/services/T2STKFLES/B5PLJV61Z/Xcow8mNU57ytCIxyIoxBt773',
     method: 'POST'
 }
+var slackPostRequest = {
+    host: 'hooks.slack.com',
+    path: '/services/T2STKFLES/B5PLJV61Z/Xcow8mNU57ytCIxyIoxBt773',
+    method: 'POST'
+}
+var slackHistoryRequest = {
+    hostname: 'slack.com',
+    path: '/api/channels.history',
+    parameters: [
+        {
+          'key': 'token',
+          'value': 'xoxp-214207973717-447071898710-445697872852-af5f7d73dd5975078fee6b9ac0585d07'
+        },
+        {
+          'key': 'channel',
+          'value': 'CD3FKLF7W'
+        }
+    ],
+    method: 'GET'
+}
 // 2. Skill Code =======================================================================================================
+
+function parameterize(parameters) {
+    var params = '?'
+    parameters.forEach((param) => {
+        params += param.key + '=' + param.value + '&'
+    })
+    return params.slice(0, -1)
+}
 
 var Alexa = require('alexa-sdk')
 
@@ -55,35 +83,57 @@ var handlers = {
     'SlackReadIntent': function () {
         var message = 'T.J. said This is an example'
         message += '<break strength="x-strong"/> Sean said This is another example'
-        this.emit(':tell', 'message')
+        this.emit(':tell', readFromSlack('0', (message) => {
+            this.emit(':tell', message)
+        }))
     }
 }
 
 //    END of Intent Handlers {} ========================================================================================
 // 3. Helper Function  =================================================================================================
-
+var https = require('https')
 function postToSlack(message, callback) {
-    var https = require('https')
-    
-    //slackRequest.headers = {
+
+    //slackPostRequest.headers = {
     //      'Content-Type': 'application/x-www-form-urlencoded',
     //      'Content-Length': Buffer.byteLength(message)
     //  }
-    var req = https.request(slackRequest, res => {
+    var req = https.request(slackPostRequest, res => {
         res.setEncoding('utf8')
         var returnData = ""
 
         res.on('data', (chunk) => {
-            //returnData = returnData + chunk
-        });
-        res.on('end', () => {
-            callback()
-            //var channelObj = JSON.parse(returnData)
-
-            //callback()
+            // Don't actually need this data
         })
-    });
+        res.on('end', () => {
+            callback() // assume it succeeded ^_^
+        })
+    })
     req.write(JSON.stringify({"text": message}))
+    req.end()
+}
+
+function readFromSlack(period, callback) {
+    var url = slackHistoryRequest
+    var params = url.parameters
+    params.oldest = '0'
+    url.path += parameterize(params)
+    console.log(JSON.stringify(url))
+
+    var req = https.request(url, (res) => {
+        res.setEncoding('utf8')
+        var returnData = ''
+
+        res.on('data', (chunk) => {
+            console.log(chunk)
+            returnData += chunk
+        })
+        res.on('end', () => {
+          console.log('Returning ' + returnData)
+            callback(returnData)
+        })
+    })
+    req.on('error', (err) => { console.error(err.message) } )
     req.end()
 }
 
@@ -99,8 +149,8 @@ function delegateSlotCollection(){
       //you have defaults, then return Dialog.Delegate with this updated intent
       // in the updatedIntent property
       //this.emit(":delegate", updatedIntent); //uncomment this is using ASK SDK 1.0.9 or newer
-	  
-	  //this code is necessary if using ASK SDK versions prior to 1.0.9 
+
+	  //this code is necessary if using ASK SDK versions prior to 1.0.9
 	  if(this.isOverridden()) {
 			return
 		}
@@ -110,12 +160,12 @@ function delegateSlotCollection(){
 			shouldEndSession: false
 		})
 		this.emit(':responseReady', updatedIntent)
-		
+
     } else if (this.event.request.dialogState !== "COMPLETED") {
       console.log("in not completed")
       // return a Dialog.Delegate directive with no updatedIntent property.
       //this.emit(":delegate"); //uncomment this is using ASK SDK 1.0.9 or newer
-	  
+
 	  //this code necessary is using ASK SDK versions prior to 1.0.9
 		if(this.isOverridden()) {
 			return
@@ -126,7 +176,7 @@ function delegateSlotCollection(){
 			shouldEndSession: false
 		})
 		this.emit(':responseReady')
-		
+
     } else {
       console.log("in completed")
       console.log("returning: "+ JSON.stringify(this.event.request.intent))
