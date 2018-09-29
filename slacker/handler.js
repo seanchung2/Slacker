@@ -16,13 +16,8 @@ var slackPostRequest = {
     path: '/services/T2STKFLES/B5PLJV61Z/Xcow8mNU57ytCIxyIoxBt773',
     method: 'POST'
 }
-var slackPostRequest = {
-    host: 'hooks.slack.com',
-    path: '/services/T2STKFLES/B5PLJV61Z/Xcow8mNU57ytCIxyIoxBt773',
-    method: 'POST'
-}
 var slackHistoryRequest = {
-    hostname: 'slack.com',
+    host: 'slack.com',
     path: '/api/channels.history',
     parameters: [
         {
@@ -43,7 +38,7 @@ function parameterize(parameters) {
     parameters.forEach((param) => {
         params += param.key + '=' + param.value + '&'
     })
-    return params.slice(0, -1)
+    return params.slice(0, -1) // Cutoff the last & or ?
 }
 
 var Alexa = require('alexa-sdk')
@@ -83,9 +78,10 @@ var handlers = {
     'SlackReadIntent': function () {
         var message = 'T.J. said This is an example'
         message += '<break strength="x-strong"/> Sean said This is another example'
-        this.emit(':tell', readFromSlack('0', (message) => {
+        readFromSlack('0', (message) => {
+          console.log('Emmiittteddd')
             this.emit(':tell', message)
-        }))
+        })
     }
 }
 
@@ -93,12 +89,7 @@ var handlers = {
 // 3. Helper Function  =================================================================================================
 var https = require('https')
 function postToSlack(message, callback) {
-
-    //slackPostRequest.headers = {
-    //      'Content-Type': 'application/x-www-form-urlencoded',
-    //      'Content-Length': Buffer.byteLength(message)
-    //  }
-    var req = https.request(slackPostRequest, res => {
+    var req = https.request(slackPostRequest, (res) => {
         res.setEncoding('utf8')
         var returnData = ""
 
@@ -114,18 +105,22 @@ function postToSlack(message, callback) {
 }
 
 function readFromSlack(period, callback) {
-    var url = slackHistoryRequest
+    var url = JSON.parse(JSON.stringify(slackHistoryRequest))
+    console.log(url)
     var params = url.parameters
-    params.oldest = '0'
+    console.log(params)
+    //params.oldest = '0'
     url.path += parameterize(params)
+    url.parameters = undefined
     console.log(JSON.stringify(url))
 
     var req = https.request(url, (res) => {
         res.setEncoding('utf8')
         var returnData = ''
+        console.log('Got res: ' + JSON.stringify(res))
 
         res.on('data', (chunk) => {
-            console.log(chunk)
+            console.log('Chjnked: ' + chunk)
             returnData += chunk
         })
         res.on('end', () => {
@@ -133,8 +128,13 @@ function readFromSlack(period, callback) {
             callback(returnData)
         })
     })
-    req.on('error', (err) => { console.error(err.message) } )
+    console.log('req socnturusta')
+    req.on('error', (err) => {
+      console.error(err.message)
+    })
+    req.write('')
     req.end()
+    console.log('Req ended')
 }
 
 function delegateSlotCollection(){
