@@ -22,7 +22,7 @@ var slackHistoryRequest = {
     parameters: [
         {
           'key': 'token',
-          'value': 'xoxp-214207973717-447071898710-445697872852-af5f7d73dd5975078fee6b9ac0585d07'
+          'value': 'xoxp-214207973717-447071898710-446953101719-9b0312757a80f361c91a897c2013e978'
         },
         {
           'key': 'channel',
@@ -117,7 +117,6 @@ function readFromSlack(period, callback) {
     var req = https.request(url, (res) => {
         res.setEncoding('utf8')
         var returnData = ''
-        console.log('Got res: ' + JSON.stringify(res))
 
         res.on('data', (chunk) => {
             console.log('Chjnked: ' + chunk)
