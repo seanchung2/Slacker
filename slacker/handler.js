@@ -41,15 +41,21 @@ var handlers = {
     'SlackPostIntent': function () {
         //delegate to Alexa to collect all the required slot values
         //var filledSlots = delegateSlotCollection.call(this)
+        /* // Uncomment this section to force Slack authentication
         if (this.event.session.user.accessToken == undefined) {
             this.emit(':tellWithLinkAccountCard', 'Please link your account')
             return
         }
-    	console.log(this.event.session.user.accessToken)
-		var message = this.event.request.intent.slots.message.value
+        */
+		    var message = this.event.request.intent.slots.message.value
         postToSlack(message, () => {
             this.emit(':tell', 'I successfully posted: ' + message)
         })
+    },
+    'SlackReadIntent': function () {
+        var message = 'T.J. said This is an example'
+        message += '<break strength="x-strong"/> Sean said This is another example'
+        this.emit(':tell', 'message')
     }
 }
 
