@@ -52,6 +52,21 @@ function messageAsSpeech(message) {
     return '' + message.user + ' said, ' + text + '.<break strength="x-strong"/>'
 }
 
+function timestampFromDuration(duration) {
+    console.log(duration)
+    var time = duration.replace(/PT([0-9]*)[SMH]/g, '$1')
+    var timeUnit = duration.replace(/PT[0-9]*([SMH])/g, '$1')
+    console.log(time)
+    console.log(timeUnit)
+    if (timeUnit == 'S')
+        time *= 1000
+    else if (timeUnit == 'M')
+        time *= 60000
+    else if (timeUnit == 'H')
+        time *= 3600000
+    return (new Date()).getTime() - time
+}
+
 var Alexa = require('alexa-sdk')
 
 exports.handler = function(event, context, callback) {
@@ -92,8 +107,13 @@ var handlers = {
             return
         }
         var token = this.event.session.user.accessToken
+        var duration = this.event.request.intent.slots.AmazonDuration.value
+        if (!duration) {
+          duration = 'PT20M'
+        }
+        var timestamp = timestampFromDuration(duration)
 
-        readFromSlack(token, 0, (history) => {
+        readFromSlack(token, timestamp, (history) => {
             var speech = ''
             history.messages.forEach((message) => {
                 speech += messageAsSpeech(message)
