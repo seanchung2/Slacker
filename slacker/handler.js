@@ -21,12 +21,12 @@ var slackHistoryRequest = {
     path: '/api/channels.history',
     parameters: [
         {
-          'key': 'token',
-          'value': 'xoxp-214207973717-447071898710-446953101719-9b0312757a80f361c91a897c2013e978'
-        },
-        {
           'key': 'channel',
           'value': 'CD3FKLF7W'
+        },
+        {
+          'key': 'count',
+          'value': 3
         }
     ],
     method: 'GET'
@@ -39,6 +39,11 @@ function parameterize(parameters) {
         params += param.key + '=' + param.value + '&'
     })
     return params.slice(0, -1) // Cutoff the last & or ?
+}
+
+function messageAsSpeech(message) {
+    var text = message.text.replace(/[<>]*/, '')
+    return '' + message.user + ' said, ' + text + '.<break strength="x-strong"/>'
 }
 
 var Alexa = require('alexa-sdk')
@@ -64,23 +69,30 @@ var handlers = {
     'SlackPostIntent': function () {
         //delegate to Alexa to collect all the required slot values
         //var filledSlots = delegateSlotCollection.call(this)
-        /* // Uncomment this section to force Slack authentication
-        if (this.event.session.user.accessToken == undefined) {
+        // Uncomment this section to force Slack authentication
+        if (!this.event.session.user.accessToken) {
             this.emit(':tellWithLinkAccountCard', 'Please link your account')
             return
         }
-        */
+
 		    var message = this.event.request.intent.slots.message.value
         postToSlack(message, () => {
             this.emit(':tell', 'I successfully posted: ' + message)
         })
     },
     'SlackReadIntent': function () {
-        var message = 'T.J. said This is an example'
-        message += '<break strength="x-strong"/> Sean said This is another example'
-        readFromSlack('0', (message) => {
-          console.log('Emmiittteddd')
-            this.emit(':tell', message)
+        if (this.event.session.user.accessToken == undefined) {
+            this.emit(':tellWithLinkAccountCard', 'Please link your account')
+            return
+        }
+        var token = this.event.session.user.accessToken
+
+        readFromSlack(token, 0, (history) => {
+            var speech = ''
+            history.messages.forEach((message) => {
+                speech += messageAsSpeech(message)
+            })
+            this.emit(':tell', speech)
         })
     }
 }
@@ -104,12 +116,13 @@ function postToSlack(message, callback) {
     req.end()
 }
 
-function readFromSlack(period, callback) {
+function readFromSlack(token, period, callback) {
     var url = JSON.parse(JSON.stringify(slackHistoryRequest))
-    console.log(url)
     var params = url.parameters
-    console.log(params)
-    //params.oldest = '0'
+    params.push({
+      'key': 'token',
+      'value': token
+    })
     url.path += parameterize(params)
     url.parameters = undefined
     console.log(JSON.stringify(url))
@@ -124,16 +137,13 @@ function readFromSlack(period, callback) {
         })
         res.on('end', () => {
           console.log('Returning ' + returnData)
-            callback(returnData)
+            callback(JSON.parse(returnData))
         })
     })
-    console.log('req socnturusta')
     req.on('error', (err) => {
       console.error(err.message)
     })
-    req.write('')
     req.end()
-    console.log('Req ended')
 }
 
 function delegateSlotCollection(){
