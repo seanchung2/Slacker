@@ -48,8 +48,47 @@ function parameterize(parameters) {
 }
 
 function messageAsSpeech(message) {
-    var text = message.text.replace(/[<>]*/g, '')
-    return '' + message.user + ' said, ' + text + '.<break strength="x-strong"/>'
+    var token = this.event.session.user.accessToken
+    var user = message.user.replace(/<>@/g, '')// or text.user
+    var text = message.text
+
+    return '' + getUserName(user, token, ()) + ' said, ' + translateMessage(text, token) + '.<break strength="x-strong"/>'
+}
+
+function translateMessage(text, token) {
+    var traslated = ''
+    var text = text.replace(/\\\[\]*/g, '')
+
+    while(text.length != 0) {
+        int index = text.indexOf('<@')
+        if(index != -1)
+        {
+            text = text.substring(text.indexOf('<@')+2)
+
+            var userID = "at " + text.substring(0, text.indexOf('>'))
+            traslated += getUserName(userID, token, ())
+
+            text = text.substring(text.indexOf('>')+1)
+        }
+        else if(text.indexOf('<') != -1 && text.indexOf('>') != -1)
+        {
+            //<https:\/\/slack.com\/api\/channels.history>
+            text = text.substring(text.indexOf('<')+1)
+
+            var url = text.substring(0, text.indexOf('>'))
+            traslated += url
+
+            text = text.substring(text.indexOf('>')+1)
+        }
+        else
+        {
+            traslated += text
+            break
+        }
+        
+    }
+
+    return traslated
 }
 
 var Alexa = require('alexa-sdk')
@@ -131,23 +170,23 @@ function readFromSlack(token, period, callback) {
     })
     url.path += parameterize(params)
     url.parameters = undefined
-    console.log(JSON.stringify(url))
+   //console.log(JSON.stringify(url))
 
     var req = https.request(url, (res) => {
         res.setEncoding('utf8')
         var returnData = ''
 
         res.on('data', (chunk) => {
-            console.log('Chjnked: ' + chunk)
+            //console.log('Chjnked: ' + chunk)
             returnData += chunk
         })
         res.on('end', () => {
-          console.log('Returning ' + returnData)
+          //console.log('Returning ' + returnData)
             callback(JSON.parse(returnData))
         })
     })
     req.on('error', (err) => {
-      console.error(err.message)
+      //console.error(err.message)
     })
     req.end()
 }
@@ -165,37 +204,37 @@ function getUserName(token, userID, callback) {
     ]
     url.path += parameterize(params)
     url.parameters = undefined
-    console.log(JSON.stringify(url))
+    //console.log(JSON.stringify(url))
 
     var req = https.request(url, (res) => {
         res.setEncoding('utf8')
         var returnData = ''
 
         res.on('data', (chunk) => {
-            console.log('Chjnked: ' + chunk)
+            //console.log('Chjnked: ' + chunk)
             returnData += chunk
         })
 
         res.on('end', () => {
-          console.log('Returning ' + JSON.parse(returnData).user.real_name)
+          //console.log('Returning ' + JSON.parse(returnData).user.real_name)
             callback(JSON.parse(returnData).user.real_name)
         })
     })
-    console.log('req socnturusta')
+    //console.log('req socnturusta')
     req.on('error', (err) => {
-      console.error(err.message)
+      //console.error(err.message)
     })
     req.write('')
     req.end()
-    console.log('Req ended')
+    //console.log('Req ended')
 }
 
 function delegateSlotCollection(){
-  console.log("in delegateSlotCollection")
-  console.log("current dialogState: "+this.event.request.dialogState)
-      console.log("returning: "+ JSON.stringify(this.event.request.intent))
+  //console.log("in delegateSlotCollection")
+  //console.log("current dialogState: "+this.event.request.dialogState)
+      //console.log("returning: "+ JSON.stringify(this.event.request.intent))
     if (this.event.request.dialogState === "STARTED") {
-      console.log("in Beginning")
+      //console.log("in Beginning")
 	  var updatedIntent= null
 	  // updatedIntent=this.event.request.intent;
       //optionally pre-fill slots: update the intent object with slot values for which
@@ -215,7 +254,7 @@ function delegateSlotCollection(){
 		this.emit(':responseReady', updatedIntent)
 
     } else if (this.event.request.dialogState !== "COMPLETED") {
-      console.log("in not completed")
+      //console.log("in not completed")
       // return a Dialog.Delegate directive with no updatedIntent property.
       //this.emit(":delegate"); //uncomment this is using ASK SDK 1.0.9 or newer
 
@@ -231,8 +270,8 @@ function delegateSlotCollection(){
 		this.emit(':responseReady')
 
     } else {
-      console.log("in completed")
-      console.log("returning: "+ JSON.stringify(this.event.request.intent))
+      //console.log("in completed")
+      //console.log("returning: "+ JSON.stringify(this.event.request.intent))
       // Dialog is now complete and all required slots should be filled,
       // so call your normal intent handler.
       return this.event.request.intent;
