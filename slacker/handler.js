@@ -31,6 +31,11 @@ var slackHistoryRequest = {
     ],
     method: 'GET'
 }
+const slackUsersInfoRequest = {
+    host: 'slack.com',
+    path: '/api/users.info',
+    method: 'GET'
+}
 
 // 2. Skill Code =======================================================================================================
 
@@ -148,27 +153,16 @@ function readFromSlack(token, period, callback) {
 }
 
 
-function getUserName(userID, callback) {
-    var slackUsersInfoRequest = {
-        host: 'slack.com',
-        path: '/api/users.info',
-        parameters: [
-            {
-                'key': 'token',
-                'value': '???',
-            },
-            {
-                'key': 'user',
-                'value': userID
-            }
-        ],
-        method: 'GET'
-    }
-
+function getUserName(token, userID, callback) {
     var url = JSON.parse(JSON.stringify(slackUsersInfoRequest))
-    console.log(url)
-    var params = url.parameters
-    console.log(params)
+    var param = [{
+        'key': 'token',
+        'value': token
+    },{
+        'key': 'user',
+        'value': userID
+    }
+    ]
     url.path += parameterize(params)
     url.parameters = undefined
     console.log(JSON.stringify(url))
