@@ -43,7 +43,7 @@ function parameterize(parameters) {
 }
 
 function messageAsSpeech(message) {
-    var text = message.text.replace(/[<>]*/, '')
+    var text = message.text.replace(/[<>]*/g, '')
     return '' + message.user + ' said, ' + text + '.<break strength="x-strong"/>'
 }
 
