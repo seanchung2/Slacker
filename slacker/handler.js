@@ -83,7 +83,7 @@ function translateMessage(text, token) {
         else
         {
             traslated += text
-            break
+            return traslated
         }
         
     }
