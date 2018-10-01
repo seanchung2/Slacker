@@ -13,7 +13,7 @@ var languageStrings = {
 
 var slackPostRequest = {
     host: 'hooks.slack.com',
-    path: '/services/T2STKFLES/B5PLJV61Z/Xcow8mNU57ytCIxyIoxBt773',
+    path: '/services/T6A63UMM3/BD3SGM1DJ/HCb3HoFaIjUqfD7oRCF4ltXC',
     method: 'POST'
 }
 var slackHistoryRequest = {
@@ -47,63 +47,67 @@ function parameterize(parameters) {
     return params.slice(0, -1) // Cutoff the last & or ?
 }
 
-function messageAsSpeech(message) {
-    var token = this.event.session.user.accessToken
-    var user = message.user.replace(/<>@/g, '')// or text.user
-    var text = message.text
+async function messageAsSpeech(token, message) {
+    var user = ''
+    var text = ''
+    if (!message.hasOwnProperty('user')) {
+        user = message.bot_id
+        text = message.text
+        user = 'Slacker'
+        text = await translateText(token, text)
 
-    return '' + getUserName(user, token, ()) + ' said, ' + translateMessage(text, token) + '.<break strength="x-strong"/>'
+        return '' + user + ' said, ' + text + '.<break strength="x-strong"/>'
+    }
+    user = message.user.replace(/<>@/g, '')// or text.user
+    text = message.text
+    console.log('Pre translation')
+    console.log(user)
+    console.log(text)
+    user = await getUserName(token, user)
+    text = await translateText(token, text)
+    console.log('Post translation')
+    console.log(user)
+    console.log(text)
+
+    return '' + user + ' said, ' + text + '.<break strength="x-strong"/>'
 }
 
-function translateMessage(text, token) {
-    var traslated = ''
-    var text = text.replace(/\\\[\]*/g, '')
+async function translateText(token, text) {
+    var translated = ''
+    var text = text.replace(/[\\\[\]]/g, '')
 
-    while(text.length != 0) {
-        int index = text.indexOf('<@')
-        if(index != -1)
+    var index = text.indexOf('<@')
+    while((index = text.indexOf('<@')) !== -1) {
+        if(index !== -1)
         {
-            text = text.substring(text.indexOf('<@')+2)
+            translated += text.substring(0, index)
+            var mention = text.substring(index + 2, text.indexOf('>'))
 
-            var userID = "at " + text.substring(0, text.indexOf('>'))
-            traslated += getUserName(userID, token, ())
+            var user = await getUserName(token, mention)
+            translated += ' at ' + user
 
             text = text.substring(text.indexOf('>')+1)
         }
-        else if(text.indexOf('<') != -1 && text.indexOf('>') != -1)
-        {
-            //<https:\/\/slack.com\/api\/channels.history>
-            text = text.substring(text.indexOf('<')+1)
-
-            var url = text.substring(0, text.indexOf('>'))
-            traslated += url
-
-            text = text.substring(text.indexOf('>')+1)
-        }
-        else
-        {
-            traslated += text
-            return traslated
-        }
-        
     }
 
-    return traslated
+    return (translated + text).replace(/[<>]/g, '')
 }
 
 function timestampFromDuration(duration) {
     console.log(duration)
-    var time = duration.replace(/PT([0-9]*)[SMH]/g, '$1')
+    var time = parseInt(duration.replace(/PT([0-9]*)[SMH]/g, '$1'))
     var timeUnit = duration.replace(/PT[0-9]*([SMH])/g, '$1')
     console.log(time)
     console.log(timeUnit)
-    if (timeUnit == 'S')
+    if (timeUnit === 'S')
         time *= 1000
-    else if (timeUnit == 'M')
+    else if (timeUnit === 'M')
         time *= 60000
-    else if (timeUnit == 'H')
+    else if (timeUnit === 'H')
         time *= 3600000
-    return (new Date()).getTime() - time
+    console.log((new Date).getTime())
+    console.log(time)
+    return (new Date).getTime() - time
 }
 
 var Alexa = require('alexa-sdk')
@@ -131,7 +135,7 @@ var handlers = {
         //var filledSlots = delegateSlotCollection.call(this)
         // Uncomment this section to force Slack authentication
         if (!this.event.session.user.accessToken) {
-            this.emit(':tellWithLinkAccountCard', 'Please link your account')
+            this.emit(':tellWithLinkAccountCard', 'Please link your Slack account')
             return
         }
 
@@ -147,17 +151,22 @@ var handlers = {
         }
         var token = this.event.session.user.accessToken
         var duration = this.event.request.intent.slots.AmazonDuration.value
-        if (!duration) {
-          duration = 'PT20M'
+        if (!duration || true) {
+          duration = 'PT5M'
         }
         var timestamp = timestampFromDuration(duration)
 
         readFromSlack(token, timestamp, (history) => {
             var speech = ''
-            history.messages.forEach((message) => {
-                speech += messageAsSpeech(message)
+            console.log(history)
+            var promises = history.messages.map((message) => {
+                return messageAsSpeech(token, message)
             })
-            this.emit(':tell', speech)
+
+            Promise.all(promises).then((values) => {
+                var speech = values.reverse().join(' ')
+                this.emit(':tell', speech)
+            })
         })
     }
 }
@@ -181,72 +190,69 @@ function postToSlack(message, callback) {
     req.end()
 }
 
-function readFromSlack(token, period, callback) {
+function readFromSlack(token, timestamp, callback) {
     var url = JSON.parse(JSON.stringify(slackHistoryRequest))
     var params = url.parameters
     params.push({
       'key': 'token',
       'value': token
     })
+    // params.push({
+    //   'key': 'oldest',
+    //   'value': timestamp
+    // })
     url.path += parameterize(params)
     url.parameters = undefined
-   //console.log(JSON.stringify(url))
 
     var req = https.request(url, (res) => {
         res.setEncoding('utf8')
         var returnData = ''
 
         res.on('data', (chunk) => {
-            //console.log('Chjnked: ' + chunk)
             returnData += chunk
         })
         res.on('end', () => {
-          //console.log('Returning ' + returnData)
             callback(JSON.parse(returnData))
         })
     })
     req.on('error', (err) => {
-      //console.error(err.message)
     })
     req.end()
 }
 
 
-function getUserName(token, userID, callback) {
-    var url = JSON.parse(JSON.stringify(slackUsersInfoRequest))
-    var param = [{
-        'key': 'token',
-        'value': token
-    },{
-        'key': 'user',
-        'value': userID
-    }
-    ]
-    url.path += parameterize(params)
-    url.parameters = undefined
-    //console.log(JSON.stringify(url))
+async function getUserName(token, userID, callback) {
+    return new Promise((resolve, reject) => {
+        var url = JSON.parse(JSON.stringify(slackUsersInfoRequest))
+        var params = [{
+            'key': 'token',
+            'value': token
+        },{
+            'key': 'user',
+            'value': userID
+        }
+        ]
+        url.path += parameterize(params)
+        url.parameters = undefined
 
-    var req = https.request(url, (res) => {
-        res.setEncoding('utf8')
-        var returnData = ''
+        var req = https.request(url, (res) => {
+            res.setEncoding('utf8')
+            var returnData = ''
 
-        res.on('data', (chunk) => {
-            //console.log('Chjnked: ' + chunk)
-            returnData += chunk
+            res.on('data', (chunk) => {
+                returnData += chunk
+            })
+
+            res.on('end', () => {
+                console.log(returnData)
+                resolve(JSON.parse(returnData).user.real_name)
+            })
         })
-
-        res.on('end', () => {
-          //console.log('Returning ' + JSON.parse(returnData).user.real_name)
-            callback(JSON.parse(returnData).user.real_name)
+        req.on('error', (err) => {
+          reject(err)
         })
+        req.end()
     })
-    //console.log('req socnturusta')
-    req.on('error', (err) => {
-      //console.error(err.message)
-    })
-    req.write('')
-    req.end()
-    //console.log('Req ended')
 }
 
 function delegateSlotCollection(){

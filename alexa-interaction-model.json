@@ -39,6 +39,36 @@
                 {
                     "name": "AMAZON.NavigateHomeIntent",
                     "samples": []
+                },
+                {
+                    "name": "SlackReadIntent",
+                    "slots": [
+                        {
+                            "name": "AmazonDuration",
+                            "type": "AMAZON.DURATION",
+                            "samples": [
+                                "What happened last {AmazonDuration}",
+                                "Get me updated for {AmazonDuration}",
+                                "Tell me what was going on for last {AmazonDuration}",
+                                "{AmazonDuration}"
+                            ]
+                        },
+                        {
+                            "name": "DefaultDuration",
+                            "type": "messageDefaultLength",
+                            "samples": [
+                                "Is there {DefaultDuration}",
+                                "Get me {DefaultDuration}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "Read {AmazonDuration}",
+                        "Update me on {AmazonDuration}",
+                        "Update me",
+                        "What happened in the last {AmazonDuration}",
+                        "What happened last"
+                    ]
                 }
             ],
             "types": [
@@ -106,6 +136,20 @@
                             }
                         }
                     ]
+                },
+                {
+                    "name": "messageDefaultLength",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "PT5M",
+                                "synonyms": [
+                                    "New messages",
+                                    "Updated"
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -126,6 +170,31 @@
                             }
                         }
                     ]
+                },
+                {
+                    "name": "SlackReadIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "AmazonDuration",
+                            "type": "AMAZON.DURATION",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.486072821882.78262865676"
+                            }
+                        },
+                        {
+                            "name": "DefaultDuration",
+                            "type": "messageDefaultLength",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.153823510152.988183001884"
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -136,6 +205,42 @@
                     {
                         "type": "PlainText",
                         "value": "What would you like to post?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.545748579265.574310740002",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "How long do you want to update?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.486072821882.78262865676",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "How long do you want to update?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.489726947016.894522187980",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "How long does you want to update?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.153823510152.988183001884",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "How long do you want to update?"
                     }
                 ]
             }
